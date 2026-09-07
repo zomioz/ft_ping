@@ -1,0 +1,29 @@
+1. Build the ICMP packet yourself
+With SOCK_RAW + IPPROTO_ICMP, the kernel builds the IP header for you automatically (unless you use IP_HDRINCL), but you must build the full ICMP message in a buffer:
+
+ICMP header (struct icmp or struct icmphdr from <netinet/ip_icmp.h>):
+type = ICMP_ECHO (8) for an echo request
+code = 0
+id = usually your process PID, so you can match replies to your own process if multiple pings run
+sequence = an incrementing counter, one per packet sent
+checksum = computed last, over the whole ICMP message (header + payload), with the checksum field itself set to 0 before computing
+Payload (optional): arbitrary data, often used to carry a timestamp (e.g. result of gettimeofday) so that when the reply comes back you can compute round-trip time. Real ping fills this with a pattern of bytes.
+2. Compute the checksum
+ICMP requires the classic Internet checksum algorithm: sum all 16-bit words of the ICMP header+payload, fold carries back into 16 bits, then take the one's complement. This is a standalone function you write once and reuse for every packet.
+
+3. Send the packet
+Use sendto() (not send(), since raw ICMP sockets aren't "connected" by default) with:
+
+the socket fd
+pointer to your ICMP buffer and its length
+a struct sockaddr_in destination filled with the target's IP (from resolving the hostname/IP argument, e.g. via getaddrinfo) and sin_family = AF_INET (no port needed for ICMP, ICMP doesn't use ports)
+4. Receive the reply
+Use recvfrom() on the same socket. The kernel delivers you the full IP packet (IP header + ICMP header + payload) since it's a raw socket, even though you only sent the ICMP part. So you must:
+
+skip past the IP header (its length is variable — read the IHL field, low 4 bits of the first byte, multiply by 4 to get header length in bytes)
+parse the ICMP header that follows: check type is ICMP_ECHOREPLY (0), and that id/sequence match what you sent (since raw sockets can receive ICMP traffic not meant for you)
+5. Timing and loop
+Record send timestamp before sendto(), compute RTT when the matching reply arrives.
+Typically loop with a 1-second interval (sleep/nanosleep/setitimer + alarm), incrementing sequence each iteration, until interrupted (e.g. SIGINT via Ctrl+C) — then print summary statistics (packets sent/received, min/avg/max RTT).
+Often a recvfrom() timeout is set (via setsockopt with SO_RCVTIMEO) so you can detect and report packet loss ("Request timeout").
+That's the full round trip: build → checksum → sendto → recvfrom → parse/validate → measure RTT → repeat. Let me know if you want to go deeper into any single step (e.g. the checksum algorithm, or the ICMP/IP header struct layouts).
