@@ -1,10 +1,12 @@
 NAME = ft_ping
 
-SRCS = main.c
+SRCS = main.c \
+		ft_ping.c
 
-OBJTS = $(SRCS:.c=.o)
+OBJDIR = objects
+OBJTS = $(addprefix $(OBJDIR)/, $(SRCS:.c=.o))
 
-HEADER = -I includes
+HEADER = ft_ping.h
 CFLAGS = -Wall -Wextra -Werror -g
 
 $(NAME): $(OBJTS)
@@ -14,11 +16,14 @@ RM	= rm -f
 
 all:	${NAME}
 
-%.o: %.c
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
+
+$(OBJDIR)/%.o: %.c $(HEADER) | $(OBJDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	${RM} ${OBJTS}
+	${RM} -r ${OBJDIR}
 
 fclean:	clean
 	${RM} ${NAME}
