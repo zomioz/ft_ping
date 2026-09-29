@@ -14,18 +14,13 @@ void	print_bits(u_int32_t octet)
     write(1, "\n", 1);
 }
 
-void ft_checksum(struct icmphdr *tmp)
+u_int16_t ft_checksum(void *buf, int len)
 {
-    u_int16_t *ptr = (u_int16_t *)tmp;
-    int len = sizeof(struct icmphdr);
+    u_int16_t *ptr = (u_int16_t *)buf;
     u_int32_t total;
 
     total = 0;
 
-    if (tmp->checksum != 0)
-        tmp->checksum = 0;
-
-    print_bits(total);
     while (len > 1)
     {
         total += *ptr;
@@ -33,13 +28,12 @@ void ft_checksum(struct icmphdr *tmp)
         len -= 2;
     }
 
-    print_bits(total);
     while (total >> 16)
     {
         total = (total & 0xFFFF) + (total >> 16);
     }
 
-    tmp->checksum = (u_int16_t)~total;
+    return ((u_int16_t)~total);
 }
 
 void ft_print_struct(struct icmphdr *tmp)
@@ -80,38 +74,50 @@ bool ft_ping(char *destination)
         return (false);
     printf("PING %s\n", destination);
 
-    
     sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (sockfd < 0)
     {
         write(2, strerror(errno), strlen(strerror(errno)));
         write(2, "\n", 1);
+        freeaddrinfo(adresse);
         return(1);
     }
-    
-    struct icmphdr *tmp;
 
-    tmp = malloc(sizeof(struct icmphdr));
-    tmp->type = 8;
-    tmp->code = 0;
-    tmp->checksum = 0;
-    tmp->un.echo.id = (u_int16_t)getpid();
-    tmp->un.echo.sequence = 0;
+    size_t packet_len = sizeof(struct icmphdr) + sizeof(struct timeval);
+    char *packet = malloc(packet_len);
+    if (!packet)
+    {
+        write(2, strerror(errno), strlen(strerror(errno)));
+        write(2, "\n", 1);
+        close(sockfd);
+        freeaddrinfo(adresse);
+        return (1);
+    }
+    struct icmphdr *hdr = (struct icmphdr *)packet;
 
-    ft_print_struct(tmp);
+    hdr->type = 8;
+    hdr->code = 0;
+    hdr->checksum = 0;
+    hdr->un.echo.id = (u_int16_t)getpid();
+    hdr->un.echo.sequence = 0;
 
-    ft_checksum(tmp);
+    struct timeval ts;
+    gettimeofday(&ts, NULL);
 
-    ssize_t sent = sendto(sockfd, tmp, sizeof(struct icmphdr), 0, adresse->ai_addr, adresse->ai_addrlen);
+    memcpy(packet + sizeof(struct icmphdr), &ts, sizeof(struct timeval));
+
+    hdr->checksum = ft_checksum(packet, packet_len);
+
+    ssize_t sent = sendto(sockfd, packet, packet_len, 0, adresse->ai_addr, adresse->ai_addrlen);
     if (sent < 0)
     {
         write(2, strerror(errno), strlen(strerror(errno)));
         write(2, "\n", 1);
     }
-    if (tmp)
-        free(tmp);
-    if (adresse)
-        freeaddrinfo(adresse);
+
+    if (packet)
+        free(packet);
+    freeaddrinfo(adresse);
     close(sockfd);
-    return true;
+    return (0);
 }
