@@ -115,6 +115,55 @@ bool ft_ping(char *destination)
         write(2, "\n", 1);
     }
 
+
+    //starting of recvfrom
+    u_int8_t receive_buff[1024];
+    struct sockaddr_in receive_addr;
+    socklen_t receive_addr_len = sizeof(receive_addr);
+    ssize_t size_receive;
+
+    size_receive = recvfrom(sockfd, receive_buff, sizeof(receive_buff), 0,
+        (struct sockaddr *)&receive_addr, &receive_addr_len);
+    if (size_receive < 0)
+    {
+        write(2, strerror(errno), strlen(strerror(errno)));
+        write(2, "\n", 1);
+    }
+    else
+    {
+        u_int8_t ip_header_len = (receive_buff[0] & 0x0F) * 4;
+        struct icmphdr *receive_icmp = (struct icmphdr *)(receive_buff + ip_header_len);
+
+        if (receive_icmp->type != 0)
+        {
+            write(2, "Error: Receive type isn't 0\n", 28);
+            if (packet)
+                free(packet);
+            freeaddrinfo(adresse);
+            close(sockfd);
+            return (0);
+        }
+        if (receive_icmp->un.echo.id != hdr->un.echo.id)
+        {
+            write(2, "Error: Receive id isn't the same as id sent\n", 44);
+            if (packet)
+                free(packet);
+            freeaddrinfo(adresse);
+            close(sockfd);
+            return (0);
+        }
+        struct timeval receive_ts;
+        struct timeval now;
+        long rtt_usec;
+
+        memcpy(&receive_ts, receive_buff + ip_header_len + sizeof(struct icmphdr),
+            sizeof(struct timeval));
+        gettimeofday(&now, NULL);
+        rtt_usec = (now.tv_sec - receive_ts.tv_sec) * 1000000
+            + (now.tv_usec - receive_ts.tv_usec);
+        printf("Time of response = %ld ms\n", rtt_usec / 1000);
+    }
+
     if (packet)
         free(packet);
     freeaddrinfo(adresse);
