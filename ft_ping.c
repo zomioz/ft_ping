@@ -2,20 +2,6 @@
 
 volatile sig_atomic_t g_stop = 0;
 
-void	print_bits(u_int32_t octet)
-{
-	int				i;
-	unsigned char	bit;
-
-	i = sizeof(octet) * 8;
-	while (i--)
-	{
-		bit = (octet >> i & 1) + '0';
-		write(1, &bit, 1);
-	}
-    write(1, "\n", 1);
-}
-
 u_int16_t ft_checksum(void *buf, int len)
 {
     u_int16_t *ptr = (u_int16_t *)buf;
@@ -51,6 +37,9 @@ struct addrinfo *ft_get_addr(char *destination)
     status = getaddrinfo(destination, NULL, &hints, &adresse);
     if (status != 0)
     {
+        write(2, "ping: ", 6);
+        write(2, destination, strlen(destination));
+        write(2, ": ", 2);
         write(2, gai_strerror(status), strlen(gai_strerror(status)));
         write(2, "\n", 1);
         return (NULL);
@@ -217,9 +206,9 @@ bool ft_ping(char *destination)
 
     struct timeval end_ts;
     gettimeofday(&end_ts, NULL);
-    int total_time = (end_ts.tv_sec - start_ts.tv_sec) * 10000000 + (end_ts.tv_usec - start_ts.tv_usec);
+    int total_time = ((end_ts.tv_sec - start_ts.tv_sec) * 1000000 + (end_ts.tv_usec - start_ts.tv_usec)) / 1000;
     printf("--- %s ping statisctics ---\n", destination);
-    printf("%d packets transmitted, %d received, %d packet loss, time %d ms\n", count_send, count_receive, ((count_send - count_receive) * 100 / count_send), total_time);
+    printf("%d packets transmitted, %d received, %d%% packet loss, time %d ms\n", count_send, count_receive, ((count_send - count_receive) * 100 / count_send), total_time);
     if (packet)
         free(packet);
     freeaddrinfo(adresse);

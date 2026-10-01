@@ -19,7 +19,6 @@ extern volatile sig_atomic_t g_stop;
 
 # define ICMP_DATA_SIZE 56
 
-void	print_bits(u_int32_t octet);
 u_int16_t ft_checksum(void *buf, int len);
 bool ft_ping(char *destination);
 struct addrinfo *ft_get_addr(char *destination);
