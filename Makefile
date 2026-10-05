@@ -10,7 +10,7 @@ HEADER = ft_ping.h
 CFLAGS = -Wall -Wextra -Werror -g
 
 $(NAME): $(OBJTS)
-	cc -o $(NAME) $(OBJTS)
+	cc -o $(NAME) $(OBJTS) -lm
 
 RM	= rm -f
 
