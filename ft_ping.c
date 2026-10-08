@@ -185,6 +185,9 @@ bool ft_ping(char *destination)
         return (false);
     }
 
+    printf("PING %s (%s): %d data bytes\n", destination,
+        inet_ntoa(((struct sockaddr_in *)adresse->ai_addr)->sin_addr), ICMP_DATA_SIZE);
+        
     while (!g_stop)
     {
         ft_setup_send(packet, packet_len);
