@@ -149,7 +149,9 @@ bool ft_ping(char *destination)
     signal(SIGINT, handle_sigint);
 
     struct addrinfo *adresse;
-    adresse = ft_get_addr(destination);
+    adresse = NULL;
+    if (destination)
+        adresse = ft_get_addr(destination);
     if (!adresse)
         return (false);
 
@@ -159,7 +161,7 @@ bool ft_ping(char *destination)
     if (sockfd == -1)
     {
         freeaddrinfo(adresse);
-        return false;
+        return (false);
     }
 
 
@@ -170,7 +172,7 @@ bool ft_ping(char *destination)
     {
         freeaddrinfo(adresse);
         close(sockfd);
-        return false;
+        return (false);
     }
     struct icmphdr *hdr = (struct icmphdr *)packet;
     struct s_ping_stats *stats;
@@ -180,7 +182,7 @@ bool ft_ping(char *destination)
         free(packet);
         freeaddrinfo(adresse);
         close(sockfd);
-        return false;
+        return (false);
     }
 
     while (!g_stop)
@@ -256,5 +258,5 @@ bool ft_ping(char *destination)
         free(stats);
     freeaddrinfo(adresse);
     close(sockfd);
-    return (0);
+    return (true);
 }
