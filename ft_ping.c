@@ -140,7 +140,7 @@ void ft_final_print(struct s_ping_stats *stats)
     double variance = (stats->rtt_sum_sq / stats->count_receive) - (avg * avg);
     printf("--- %s ping statisctics ---\n", stats->destination);
     printf("%d packets transmitted, %d received, %d%% packet loss, time %d ms\n", stats->count_send, stats->count_receive, ((stats->count_send - stats->count_receive) * 100 / stats->count_send), total_time);
-    printf("rtt min/avg/max/mdev  = %.3f/%.3f/%.3f/%.3f ms\n", stats->rtt_min / 1000.0, avg / 1000.0, stats->rtt_max / 1000.0, sqrt(variance) / 1000.0);
+    printf("round-trip min/avg/max/stddev  = %.3f/%.3f/%.3f/%.3f ms\n", stats->rtt_min / 1000.0, avg / 1000.0, stats->rtt_max / 1000.0, sqrt(variance) / 1000.0);
 }
 
 bool ft_ping(char *destination)
