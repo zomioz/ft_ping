@@ -20,6 +20,15 @@ extern volatile sig_atomic_t g_stop;
 
 # define ICMP_DATA_SIZE 56
 
+typedef struct s_parsing
+{
+    char *destination;
+    bool flag_v;
+    bool flag_T;
+    bool flag_n;
+
+}t_parsing;
+
 typedef struct s_ping_stats
 {
     int count_send;
