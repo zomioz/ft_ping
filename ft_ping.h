@@ -20,12 +20,25 @@ extern volatile sig_atomic_t g_stop;
 
 # define ICMP_DATA_SIZE 56
 
+//flag_c N = Stop after sending (and receiving) N ECHO_RESPONSE packets.
+//flag_q = Quiet output.  Nothing is displayed except the summary lines at startup time and when finished.
+//flag_w N = Stop after N seconds of sending packets.
+//flag_i N = Wait N seconds between sending each packet.  The default is to wait for one second between each packet.
+//flag_W N = Number of seconds N to wait for response
 typedef struct s_parsing
 {
     char *destination;
     bool flag_v;
-    bool flag_T;
-    bool flag_n;
+    bool flag_c;
+    int flag_c_count;
+    bool flag_q;
+    bool flag_w;
+    int flag_w_count;
+    bool flag_i;
+    int flag_i_count;
+    bool flag_W;
+    int flag_W_count;
+    bool flag_question_mark;
 
 }t_parsing;
 
